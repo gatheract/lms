@@ -86,7 +86,6 @@ class Signup extends React.Component{
  }
 
 
-    
  render(){
     const {auth, branches, semesters, authError} = this.props;
     if(auth.uid) return (<Redirect to="/"></Redirect>)
