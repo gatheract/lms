@@ -12,6 +12,8 @@ import Teachers from './pages/Teachers';
 import Assignments from './pages/Assignments';
 import Admins from './pages/Admins';
 import Teacher from './pages/Teacher';
+import LTITools from './pages/LTITools';
+import LTITool from './pages/LTITool';
 
 
 
@@ -34,6 +36,8 @@ const AdminDashboard = ({auth, upload, authSuccess}) => {
                     <Route exact path="/courses/:course" component={Course}></Route>
                     <Route exact path="/assignments" component={Assignments}></Route>
                     <Route exact path="/admins" component={Admins}></Route>
+                    <Route exact path="/tools" component={LTITools}></Route>
+                    <Route exact path="/tools/:tool" component={LTITool}></Route>
             </Switch>
             <Footer></Footer>
         </div>

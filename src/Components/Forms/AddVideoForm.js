@@ -29,7 +29,7 @@ const AddVideoForm = ({course, addNewVideo}) => {
                 addNewVideo(currentCourse, title, url)
             });
         });
-        }
+    }
 
     return(
         <Container>

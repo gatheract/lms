@@ -105,7 +105,6 @@ const EditTeacherForm = ({teacher, updateTeacherInfo}) => {
 
 
 const mapStateToProps = (state) => {
-    console.log(state)
     return{
         edited: state.student.edited
     }

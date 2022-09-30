@@ -134,6 +134,30 @@ export const addResource = (course, title, url)  => {
     }
 }
 
+export const addTool = (tool, course)  => {
+    return (dispatch, getState, {getFirebase}) => {
+        const firebase = getFirebase();
+        const firestore = getFirebase().firestore();
+        console.log(tool)
+        firestore
+            .collection('courses')
+            .doc(course[0].id)
+            .update({
+                tools: firebase.firestore.FieldValue.arrayUnion({
+                    name: tool.name,
+                    id: tool.id,
+                    url: tool.url
+                })
+            })
+            .catch((err)=> {
+                console.log(err)
+                dispatch({
+                    type: 'TOOL_SAVE_ERROR',
+                    error: err,
+                }) 
+            })
+    }
+}
 
 export const removeResource = (course, title, url) => {
     return (dispatch, getState, {getFirebase}) => {
@@ -161,6 +185,31 @@ export const removeResource = (course, title, url) => {
                 console.log(err)
                 dispatch({
                     type: 'IMAGE_UPLOAD_ERROR',
+                    error: err,
+                }) 
+            })
+    }
+}
+
+export const removeTool = (course, tool) => {
+    return (dispatch, getState, {getFirebase}) => {
+        const firebase = getFirebase();
+        const firestore = getFirebase().firestore();
+
+        firestore
+            .collection('courses')
+            .doc(course[0].id)
+            .update({
+                tools: firebase.firestore.FieldValue.arrayRemove({
+                    name: tool.name,
+                    id: tool.id,
+                    url: tool.url
+                })
+            })
+            .catch((err)=> {
+                console.log(err)
+                dispatch({
+                    type: 'TOOL_REMOVE_ERROR',
                     error: err,
                 }) 
             })

@@ -19,7 +19,7 @@ const AssignmentCard = ({assignment, handleAssignmentRemove, profile, uploadTogg
             <p className="ml-2 a-subtitle">Course: {assignment.course}</p>
             </CardTitle>
             <Button className="a-btn" color="primary">
-                <a href={assignment.questionUrl} className="link">
+                <a target="blank" href={assignment.questionUrl} className="link">
                 View 
                 </a>
             </Button>
