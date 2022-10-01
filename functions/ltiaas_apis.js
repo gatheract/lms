@@ -1,9 +1,21 @@
 const functions = require("firebase-functions");
 const cors = require('cors')({origin: true})
 const https = require('https');
+var jwt = require('jsonwebtoken');
 
 const LTIAAS_HOSTNAME = "test-consumer.ltiaas.com" // <- AWS: LTIAAS-test_brazil
 const LTIAAS_ACCOUNT = "consumer"
+const LTIAAS_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuSjo0/c7
+oVaXPcJfc9e2Q7/SWK/UzEBHe0AT58QOY3MVsYxMVR6I4KNSL
+PdprazY+Jp4KVP2CHqzvrSqMyjy0M5VrrpRnNXF2XfeSwTOMHo
+qFPIqxM67KOvjlnKVQA1S0fIegDCQ0kSapbzoKcvegnM9iCzCTwQ
+Xy0wwlDIJbUm28yssPhUz326PfwNZT7QrGqOTAgMusK2pM2fBi
+nP3bYfpjacbf8gsekpU85ngz6LWP8yZpcYYku27ko4IVDo++mBH
+cMBZM7UyFB1wnhW1nV/Km7l4aE383S+74/X57nQdk8I4UQCSL2
+EyoF9mrIKaqpxRqp7vpEmhsLyYFQH/7QIDAQAB
+-----END PUBLIC KEY-----`
+
 
 exports.doDynamicRegistration = functions.https.onRequest(async (req, res) => {
   cors(req, res, async() => {
@@ -152,7 +164,13 @@ exports.LTIValidate = functions.https.onRequest(async (req, res) => {
   cors(req, res, async() => {
     try {
 
-      const data = req.body;
+      let decoded = undefined;
+      try {
+        decoded = jwt.verify(req.body.payload, LTIAAS_PUBLIC_KEY);
+      } catch(err) {
+        res.send({ message: `JWT Verification Failed: ${err.message}, payload=${req.body.payload}` }).status(400);
+      }
+      console.log(decoded);
       // This is just an example, normally we would validate the user has permission to launch the tool
         /*
             user = db.users.where('uid' == auth.uid).get()
@@ -161,8 +179,8 @@ exports.LTIValidate = functions.https.onRequest(async (req, res) => {
             tool = course.tools.find(t => t.id == THIS_LTI_CONTEXT.toolId)
             if(!tool) return(<Redirect to="/login"></Redirect>)
         */
-      const postData = JSON.stringify(data);
-      /* should be:
+      const postData = JSON.stringify(decoded);
+      /* should be getting:
         { metadata, parameters: { user, context, resource } }
       */
 
@@ -180,7 +198,7 @@ exports.LTIValidate = functions.https.onRequest(async (req, res) => {
       }
       try {
         const result = await getPromisedApiResponse(options, true, postData);
-        res.send(result).status(200);
+        res.send(result.form).status(200);
       } catch(e) {
         res.send({ message: e.message }).status(500);
       }
