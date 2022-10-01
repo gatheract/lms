@@ -3,8 +3,6 @@ import { Button, Card, CardTitle, Col, Row} from 'reactstrap'
 import { removeTool } from '../../Store/actions/courseActions';
 import { connect } from 'react-redux'
 
-
-
 const CourseToolCard = ({resources, course, userId, profile, removeTool}) => {
 
     const resourceList = resources || [];
@@ -13,7 +11,8 @@ const CourseToolCard = ({resources, course, userId, profile, removeTool}) => {
         removeTool(course,title, url)
     }
 
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(false);
+    const [launchForm, setLaunchForm] = useState(false);
 
     const launchTool = (course, tool) => {
         const post_data = {
@@ -38,7 +37,7 @@ const CourseToolCard = ({resources, course, userId, profile, removeTool}) => {
         }).then((res) => (res.json()))
         .then(res => {
             console.log(res)
-            document.write(res.result.form);
+            setLaunchForm(res.result.form);
         })
     }
 
@@ -46,15 +45,20 @@ const CourseToolCard = ({resources, course, userId, profile, removeTool}) => {
         <Row>
             {resourceList.map((r) => (
                 <React.Fragment key={r.id}>
-                    <Col md="5">
+                    <Col>
                         <Card className="video-card mb-3">
                             <CardTitle className="video-title">{r.name}</CardTitle>
-                            <Button className="button w-25 mb-2 view-button" disabled={loading === r.id} onClick={() => launchTool(course, r)}>
-                                {loading === r.id ? "Loading..." : "View"}
-                            </Button>
-                            { profile.userType === "Student" ? null : 
-                            <Button color="danger" className="button w-25" onClick={() => handleDelete(course, r)}>Remove</Button>
-                            }                               
+                            {!launchForm &&
+                            <>
+                                <Button className="button w-25 mb-2 view-button" disabled={loading === r.id} onClick={() => launchTool(course, r)}>
+                                    {loading === r.id ? "Loading..." : "View"}
+                                </Button>
+                                { profile.userType === "Student" ? null : 
+                                    <Button color="danger" className="button w-25" onClick={() => handleDelete(course, r)}>Remove</Button>
+                                }
+                            </>
+                            }
+                            {launchForm && <iframe frameBorder="0" width="100%" height="600" title="LTI launch" src={"data:text/html,"+encodeURIComponent(launchForm)}>Browser not compatible with iframes.</iframe>}
                         </Card>
                     </Col>
                 </React.Fragment>

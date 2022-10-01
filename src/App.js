@@ -11,7 +11,6 @@ import './App.css'
 import ErrorPage from './Errorpage';
 import CustomNavbar from './Components/Navbar/Navbar';
 import {ADMIN_ROUTES, STUDENT_ROUTES, TEACHER_ROUTES} from './Routes'
-import LTILaunch from './Dashboards/LTILaunch';
 
 
 
@@ -36,7 +35,6 @@ class App extends React.Component{
          <Switch>
           <Route path="/signup" exact component={Signup}></Route>
           <Route path="/login" exact component={Login}></Route>
-          <Route path="/lti-launch" exact component={LTILaunch}></Route>
           <Route path="/404" component={ErrorPage}></Route>
           {
             auth && !auth.uid && <Redirect to="/login"></Redirect>
