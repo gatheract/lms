@@ -47,17 +47,21 @@ const CourseToolCard = ({resources, course, userId, profile, removeTool}) => {
                 <React.Fragment key={r.id}>
                     <Col>
                         <Card className="video-card mb-3">
-                            <CardTitle className="video-title">{r.name}</CardTitle>
+                            <CardTitle className="video-title">{r.name}
                             {!launchForm &&
                             <>
-                                <Button className="button w-25 mb-2 view-button" disabled={loading === r.id} onClick={() => launchTool(course, r)}>
+                                <Button className="button w-25 ml-2 view-button" disabled={loading === r.id} onClick={() => launchTool(course, r)}>
                                     {loading === r.id ? "Loading..." : "View"}
                                 </Button>
                                 { profile.userType === "Student" ? null : 
-                                    <Button color="danger" className="button w-25" onClick={() => handleDelete(course, r)}>Remove</Button>
+                                    <Button color="danger" className="button ml-2 w-25" onClick={() => handleDelete(course, r)}>Remove</Button>
                                 }
                             </>
                             }
+                            {launchForm &&
+                                    <Button color="warning" className="button ml-2 w-25" onClick={() => {setLaunchForm(false);setLoading(false)}}>Close Tool</Button>
+                            }
+                            </CardTitle>
                             {launchForm && <iframe frameBorder="0" width="100%" height="600" title="LTI launch" src={"data:text/html,"+encodeURIComponent(launchForm)}>Browser not compatible with iframes.</iframe>}
                         </Card>
                     </Col>
