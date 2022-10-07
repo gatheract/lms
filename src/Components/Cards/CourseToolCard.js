@@ -17,13 +17,14 @@ const CourseToolCard = ({resources, course, userId, profile, removeTool}) => {
     const launchTool = (course, tool) => {
         const post_data = {
             clientId: tool.id,
-            context: course.id,
-            resource: tool.url,
+            context: course[0].id,
+            resource: tool.id,
             user: userId
             //launchEndpoint` - Optional
             //personalData` - Optional
             //customParameters` - Optional
         }
+        console.log(post_data)
         const postData = JSON.stringify(post_data);
         setLoading(tool.id);
         fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/LTILaunch', {

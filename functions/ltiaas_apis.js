@@ -2,6 +2,7 @@ const functions = require("firebase-functions");
 const cors = require('cors')({origin: true})
 const https = require('https');
 var jwt = require('jsonwebtoken');
+const admin = require('firebase-admin');
 
 const LTIAAS_HOSTNAME = "test-consumer.ltiaas.com" // <- AWS: LTIAAS-test_brazil
 const LTIAAS_ACCOUNT = "consumer"
@@ -166,23 +167,52 @@ exports.LTIValidate = functions.https.onRequest(async (req, res) => {
 
       let decoded = undefined;
       try {
+        // Verify the JWT with the public Key given by LTIAAS
         decoded = jwt.verify(req.body.payload, LTIAAS_PUBLIC_KEY);
       } catch(err) {
         res.send({ message: `JWT Verification Failed: ${err.message}, payload=${req.body.payload}` }).status(400);
       }
-      console.log(decoded);
-      // This is just an example, normally we would validate the user has permission to launch the tool
-        /*
-            user = db.users.where('uid' == auth.uid).get()
-            courses = db.get(courses)
-            course = courses.find(c => c.branch == user.branch)
-            tool = course.tools.find(t => t.id == THIS_LTI_CONTEXT.toolId)
-            if(!tool) return(<Redirect to="/login"></Redirect>)
-        */
-      const postData = JSON.stringify(decoded);
-      /* should be getting:
-        { metadata, parameters: { user, context, resource } }
-      */
+
+      // Get information about the requested launch context to send back to the learning tool via the idToken
+      const querySnapshot = await admin.firestore().collection('users').where('SRN', '==', decoded.parameters.user).get();
+      let user = undefined;
+      querySnapshot.forEach(doc => {
+        user = doc.data();
+      });
+      const courseDoc = await admin.firestore().collection('courses').doc(decoded.parameters.context).get();
+      const course = courseDoc.data();
+      const tool = course.tools.find((tool) => tool.id === decoded.parameters.resource);
+      const roles = [];
+      if(user.userType === "Admin" || user.userType === "Teacher") {
+        roles.push("CONTEXT_INSTRUCTOR")
+      }
+      if(user.userType === "Student") {
+        roles.push("CONTEXT_LEARNER")
+      }
+      
+      // Build the request object
+      const data = {
+        metadata: decoded.metadata,
+        user: {
+          id: decoded.parameters.user,
+          name: user.name,
+          email: user.email,
+          givenName: user.name.split(" ")[0],
+          familyName: user.name.split(" ")[1],
+          roles: roles,
+        },
+        context: {
+          id: course.courseId,
+          label: course.branch,
+          title: course.title
+        },
+        resource: {
+          id: tool.id,
+          title: tool.name,
+          description: tool.name
+        }
+      }
+      const postData = JSON.stringify(data);
 
       const options = {
         hostname: LTIAAS_HOSTNAME,
@@ -198,6 +228,8 @@ exports.LTIValidate = functions.https.onRequest(async (req, res) => {
       }
       try {
         const result = await getPromisedApiResponse(options, true, postData);
+        // LTIAAS sends us a self-submitting form to append to the body.
+        // This form redirects to the tool launch URL
         res.send(result.form).status(200);
       } catch(e) {
         res.send({ message: e.message }).status(500);
