@@ -161,83 +161,85 @@ exports.LTILaunch = functions.https.onRequest(async (req, res) => {
   })
 })
 
-exports.LTIValidate = functions.https.onRequest(async (req, res) => {
-  cors(req, res, async() => {
+exports.LTIValidate = functions.https.onCall(async (data, context) => {
+  const payload = data.payload;
+  const uid = data.uid;
+  try {
+
+    let decoded = undefined;
     try {
-
-      let decoded = undefined;
-      try {
-        // Verify the JWT with the public Key given by LTIAAS
-        decoded = jwt.verify(req.body.payload, LTIAAS_PUBLIC_KEY);
-      } catch(err) {
-        res.send({ message: `JWT Verification Failed: ${err.message}, payload=${req.body.payload}` }).status(400);
-      }
-
-      // Get information about the requested launch context to send back to the learning tool via the idToken
-      const querySnapshot = await admin.firestore().collection('users').where('SRN', '==', decoded.parameters.user).get();
-      let user = undefined;
-      querySnapshot.forEach(doc => {
-        user = doc.data();
-      });
-      const courseDoc = await admin.firestore().collection('courses').doc(decoded.parameters.context).get();
-      const course = courseDoc.data();
-      const tool = course.tools.find((tool) => tool.id === decoded.parameters.resource);
-      const roles = [];
-      if(user.userType === "Admin" || user.userType === "Teacher") {
-        roles.push("CONTEXT_INSTRUCTOR")
-      }
-      if(user.userType === "Student") {
-        roles.push("CONTEXT_LEARNER")
-      }
-      
-      // Build the request object
-      const data = {
-        metadata: decoded.metadata,
-        user: {
-          id: decoded.parameters.user,
-          name: user.name,
-          email: user.email,
-          givenName: user.name.split(" ")[0],
-          familyName: user.name.split(" ")[1],
-          roles: roles,
-        },
-        context: {
-          id: course.courseId,
-          label: course.branch,
-          title: course.title
-        },
-        resource: {
-          id: tool.id,
-          title: tool.name,
-          description: tool.name
-        }
-      }
-      const postData = JSON.stringify(data);
-
-      const options = {
-        hostname: LTIAAS_HOSTNAME,
-        port: 443,
-        path: `/api/idtoken/core`,
-        method: 'POST',
-        timeout: 30000,
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(postData),
-          'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`,
-        }
-      }
-      try {
-        const result = await getPromisedApiResponse(options, true, postData);
-        // LTIAAS sends us a self-submitting form to append to the body.
-        // This form redirects to the tool launch URL
-        res.send(result.form).status(200);
-      } catch(e) {
-        res.send({ message: e.message }).status(500);
-      }
-    } catch (e) {
-      res.send({ message: e.message }).status(500);
+      // Verify the JWT with the public Key given by LTIAAS
+      decoded = jwt.verify(payload, LTIAAS_PUBLIC_KEY);
+    } catch(err) {
+      throw new functions.https.HttpsError('internal', `JWT Verification Failed: ${err.message}, payload=${payload}`);
     }
-  })
+
+    //TODO: check that front-end userid matches parameters.user
+    if(decoded.parameters.user != uid) {
+      throw new functions.https.HttpsError('internal', `${decoded.parameters.user} does not match logged in user: ${uid}`);
+    }
+
+    // Get information about the requested launch context to send back to the learning tool via the idToken
+    const doc = await admin.firestore().collection('users').doc(decoded.parameters.user).get();
+    const user = doc.data();
+    const courseDoc = await admin.firestore().collection('courses').doc(decoded.parameters.context).get();
+    const course = courseDoc.data();
+    const tool = course.tools.find((tool) => tool.id === decoded.parameters.resource);
+    const roles = [];
+    if(user.userType === "Admin" || user.userType === "Teacher") {
+      roles.push("CONTEXT_INSTRUCTOR")
+    }
+    if(user.userType === "Student") {
+      roles.push("CONTEXT_LEARNER")
+    }
+    
+    // Build the request object
+    const data = {
+      metadata: decoded.metadata,
+      user: {
+        id: decoded.parameters.user,
+        name: user.name,
+        email: user.email,
+        givenName: user.name.split(" ")[0],
+        familyName: user.name.split(" ")[1],
+        roles: roles,
+      },
+      context: {
+        id: course.courseId,
+        label: course.branch,
+        title: course.title
+      },
+      resource: {
+        id: tool.id,
+        title: tool.name,
+        description: tool.name
+      }
+    }
+    const postData = JSON.stringify(data);
+
+    const options = {
+      hostname: LTIAAS_HOSTNAME,
+      port: 443,
+      path: `/api/idtoken/core`,
+      method: 'POST',
+      timeout: 30000,
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData),
+        'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`,
+      }
+    }
+    try {
+      const result = await getPromisedApiResponse(options, true, postData);
+      // LTIAAS sends us a self-submitting form to append to the body.
+      // This form redirects to the tool launch URL
+      return result.form;
+    } catch(e) {
+      throw new functions.https.HttpsError('internal', e.message);
+    }
+  } catch (e) {
+    throw new functions.https.HttpsError('internal', e.message);
+  }
 })
 
 

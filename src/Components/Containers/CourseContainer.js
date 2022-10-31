@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { firestoreConnect } from 'react-redux-firebase'
-import { Button, Col, Container, Row } from 'reactstrap'
+import { Button, Col, Row } from 'reactstrap'
 import { compose } from 'redux'
 import ResourceCard from '../Cards/ResourceCard'
 import CourseToolCard from '../Cards/CourseToolCard'
@@ -20,12 +20,10 @@ const dummy = {
 }
 
 
-const CourseContainer = ({course, profile}) => {
+const CourseContainer = ({course, profile, auth}) => {
 
     const currentCourse = course ? course[0] : dummy
     const isStudent = profile.userType === 'Student' ? true :  false;
-    console.log(profile);
-
 
     const [isVideoFormOpen, setIsVideoFormOpen] = useState(false);
     const [isResourcesFormOpen, setIsResourcesFormOpen] = useState(false);
@@ -57,7 +55,7 @@ const CourseContainer = ({course, profile}) => {
                     <div className="w-100 mb-2 empty-div" style={{"padding":"8px"}}>
                         <p className="center-text">No Course LTI Tools yet!</p>
                     </div>
-                    : <CourseToolCard resources={currentCourse.tools} course={course} userId={profile.SRN}></CourseToolCard>}
+                    : <CourseToolCard resources={currentCourse.tools} course={course} userId={auth.uid}></CourseToolCard>}
                 </Col>
             </Row>
             <Row className="mt-3 mb-3">

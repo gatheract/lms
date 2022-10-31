@@ -11,15 +11,14 @@ import './App.css'
 import ErrorPage from './Errorpage';
 import CustomNavbar from './Components/Navbar/Navbar';
 import {ADMIN_ROUTES, STUDENT_ROUTES, TEACHER_ROUTES} from './Routes'
-
-
-
+import LTIValidate from './Components/LTIValidate';
 
 class App extends React.Component{
   render(){
     const {profile,auth} = this.props;
     
     var links;
+    console.log(profile)
 
     if(profile.userType === "Admin"){
       links = ADMIN_ROUTES;
@@ -38,6 +37,12 @@ class App extends React.Component{
           <Route path="/404" component={ErrorPage}></Route>
           {
             auth && !auth.uid && <Redirect to="/login"></Redirect>
+          }
+          {
+            auth && auth.uid && <Route
+              path="/LTIValidate"
+              render={(props) => <LTIValidate {...props} uid={auth.uid} />}
+            />
           }
           {
             profile.userType === "Admin" && <AdminDashboard></AdminDashboard> 
