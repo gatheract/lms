@@ -139,7 +139,7 @@ exports.LTILaunch = functions.https.onRequest(async (req, res) => {
       const options = {
         hostname: LTIAAS_HOSTNAME,
         port: 443,
-        path: `/api/launch/core`,
+        path: `/api/launch/core/form`,
         method: 'POST',
         timeout: 30000,
         headers: {
@@ -233,7 +233,7 @@ exports.LTIValidate = functions.https.onCall(async (data, context) => {
       const result = await getPromisedApiResponse(options, true, postData);
       // LTIAAS sends us a self-submitting form to append to the body.
       // This form redirects to the tool launch URL
-      return result.form;
+      return result;
     } catch(e) {
       throw new functions.https.HttpsError('internal', e.message);
     }
