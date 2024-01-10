@@ -5,14 +5,16 @@ import { compose } from 'redux'
 import { Container, Row, Col, Button, Input} from 'reactstrap'
 import LTIToolCard from '../../../Components/Cards/LTIToolCard'
 import { doDynamicRegistration } from '../../../Store/actions/LTIToolActions'
+import { Alert } from 'react-bootstrap'
 
 const LTITools = ({tools, profile}) => {
 
     const admin = profile.userType  === 'Admin' ? profile : false;
 
     const [dynamicRegistrationUrl, setDynamicRegistrationUrl] = useState('')
+    const [errorMessage, setErrorMessage] = useState(null);
 
-    const dynamicRegistrationClick = () => doDynamicRegistration(dynamicRegistrationUrl);
+    const dynamicRegistrationClick = () => doDynamicRegistration(dynamicRegistrationUrl, setErrorMessage);
 
     const handleChange = (e) => {
         const input = e.target.value.trim();
@@ -23,8 +25,8 @@ const LTITools = ({tools, profile}) => {
         <Container className="mt-4 mb-4">
         <h1 className="table-title mt-3 mb-3">LTI Tools</h1>
         <Row className='m-3'>
-            <Row md='12'>
-                <Col>
+            <Row>
+                <Col> 
                     {admin &&
                         <>
                             Dynamic Registration URL:{" "}
@@ -43,6 +45,7 @@ const LTITools = ({tools, profile}) => {
                 </Col>
             </Row>
         </Row>
+        {errorMessage && <Alert>{errorMessage}</Alert>}
         <LTIToolCard tools={tools}></LTIToolCard>
      </Container>        
     )

@@ -37,61 +37,60 @@ const LTIToolForm = ({ toolId, addLTITool }) => {
 
   const handleTool = (inputs) => {
     setInSubmit(true);
-    console.log(currentTool);
     currentTool = inputs;
     addLTITool(inputs);
     setSaveComplete(true);
   };
 
-  const fetchTool = async (toolId) => {
-    setLoading(true);
-    const data = {
-      id: toolId
-    }
-    const postData = JSON.stringify(data);
-    if(toolId !== "new") {
-      const res = await fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/getTool', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Length': Buffer.byteLength(postData),
-          'Content-Type': 'application/json'
-        },
-        body: postData
-      })
-      const result = await res.json();
-      console.log(result.result)
-      setValue('name', result.result.name);
-      setValue('description', result.result.description);
-      setValue('launchURL', result.result.launchURL);
-      setValue('launchEndpoint', result.result.launchEndpoint);
-      setValue('loginEndpoint', result.result.loginEndpoint);
-      setValue('deeplinkingEndpoint', result.result.deeplinkingEndpoint);
-      setValue('redirectionUris', result.result.redirectionUris);
-      setValue('authConfigMethod', result.result.authConfig.ethod);
-      setValue('authConfigKey', result.result.authConfig.key);
-      /*setValue('permissions_MEMBERSHIPS_READ', result.result.);
-      setValue('permissions_LINEITEMS_READ', result.result.);
-      setValue('permissions_LINEITEMS_READ_WRITE', result.result.);
-      setValue('permissions_GRADES_READ', result.result.);
-      setValue('permissions_GRADES_WRITE', result.result.);
-      setValue('personalData', result.result.);
-      setValue('customParameters', result.result.customParameters.join(','));*/
-      setValue('active', result.result.active);
-    }
-    setLoading(false);
-  };
-
+  const { register, handleSubmit, setValue } = useForm();
+  
   useEffect(() => {
-    if (toolId) {
+    const fetchTool = async (toolId) => {
+      setLoading(true);
+      const data = {
+        id: toolId
+      }
+      const postData = JSON.stringify(data);
+      if(toolId !== "new") {
+        const res = await fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/getTool', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Length': Buffer.byteLength(postData),
+            'Content-Type': 'application/json'
+          },
+          body: postData
+        })
+        const result = await res.json();
+        console.log(result.result)
+        setValue('name', result.result.name);
+        setValue('description', result.result.description);
+        setValue('launchURL', result.result.launchURL);
+        setValue('launchEndpoint', result.result.launchEndpoint);
+        setValue('loginEndpoint', result.result.loginEndpoint);
+        setValue('deeplinkingEndpoint', result.result.deeplinkingEndpoint);
+        setValue('redirectionUris', result.result.redirectionUris);
+        setValue('authConfigMethod', result.result.authConfig.ethod);
+        setValue('authConfigKey', result.result.authConfig.key);
+        /*setValue('permissions_MEMBERSHIPS_READ', result.result.);
+        setValue('permissions_LINEITEMS_READ', result.result.);
+        setValue('permissions_LINEITEMS_READ_WRITE', result.result.);
+        setValue('permissions_GRADES_READ', result.result.);
+        setValue('permissions_GRADES_WRITE', result.result.);
+        setValue('personalData', result.result.);
+        setValue('customParameters', result.result.customParameters.join(','));*/
+        setValue('active', result.result.active);
+      }
+      setLoading(false);
+    };
+  
+    if (toolId && toolId !== "new") {
       fetchTool(toolId);
     }
-  }, [toolId]);
+  }, [toolId, setValue]);
 
-  const { register, handleSubmit, setValue } = useForm();
 
   if (saveComplete) return <Redirect to={`/tools/${currentTool.id}`}></Redirect>;
-
   return (
     <Form onSubmit={handleSubmit(handleTool)}>
       <Container>
@@ -237,13 +236,14 @@ const LTIToolForm = ({ toolId, addLTITool }) => {
             </Input>
           </Row>
         </Col>
+        <Input type="hidden" value={toolId} name="id" innerRef={register}></Input>
         <Button
           color="primary"
           type="submit"
           className="mt-4"
           disabled={inSubmit}
         >
-          {inSubmit ? <>Saving...</> : <>Update Tool</>}
+          {inSubmit ? <>Saving...</> : (toolId === "new" ? <>Add Tool</> : <>Update Tool</>)}
         </Button>
       </Container>
     </Form>

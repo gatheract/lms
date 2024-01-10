@@ -32,6 +32,7 @@ export const addLTITool = (tool) => {
         }
 
         const post_data = {
+            id: tool.id || "new",
             name: tool.name,
             launchEndpoint: tool.launchEndpoint,
             loginEndpoint: tool.loginEndpoint,
@@ -96,7 +97,7 @@ export const removeLTITool = (tool) => {
     }
 }
 
-export const doDynamicRegistration = (url) => {
+export const doDynamicRegistration = (url, setErrorMessage) => {
     return fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/doDynamicRegistration', {
             method: 'POST',
             headers: {
@@ -109,8 +110,8 @@ export const doDynamicRegistration = (url) => {
         })
         .then((res) => (res.json()))
         .then((result) => {
-            console.log(result)
+            setErrorMessage(result)
         }).catch(err => {
-            console.log(err)
+            setErrorMessage(err)
         })
 }

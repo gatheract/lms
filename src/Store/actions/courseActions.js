@@ -143,11 +143,7 @@ export const addTool = (tool, course)  => {
             .collection('courses')
             .doc(course[0].id)
             .update({
-                tools: firebase.firestore.FieldValue.arrayUnion({
-                    name: tool.name,
-                    id: tool.id,
-                    url: tool.url
-                })
+                tools: firebase.firestore.FieldValue.arrayUnion(tool)
             })
             .catch((err)=> {
                 console.log(err)

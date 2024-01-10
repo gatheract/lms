@@ -7,8 +7,8 @@ const CourseToolCard = ({resources, course, userId, profile, removeTool}) => {
 
     const resourceList = resources || [];
 
-    const handleDelete = (course, title, url) => {
-        removeTool(course,title, url)
+    const handleDelete = (course, tool) => {
+        removeTool(course, tool)
     }
 
     const [loading, setLoading] = useState(false);
@@ -19,12 +19,11 @@ const CourseToolCard = ({resources, course, userId, profile, removeTool}) => {
             clientId: tool.id,
             context: course[0].id,
             resource: tool.id,
-            user: userId
-            //launchEndpoint` - Optional
+            user: userId,
+            launchEndpoint: tool.launchEndpoint //Optional
             //personalData` - Optional
             //customParameters` - Optional
         }
-        console.log(post_data)
         const postData = JSON.stringify(post_data);
         setLoading(tool.id);
         fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/LTILaunch', {

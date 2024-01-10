@@ -4,17 +4,15 @@ const https = require('https');
 var jwt = require('jsonwebtoken');
 const admin = require('firebase-admin');
 
-const LTIAAS_HOSTNAME = "test-consumer.ltiaas.com" // <- AWS: LTIAAS-test_brazil
-const LTIAAS_ACCOUNT = "consumer"
+const LTIAAS_HOSTNAME = "lms.test-br.ltiaas.com" // <- LTIAAS-test_brazil
 const LTIAAS_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuSjo0/c7
-oVaXPcJfc9e2Q7/SWK/UzEBHe0AT58QOY3MVsYxMVR6I4KNSL
-PdprazY+Jp4KVP2CHqzvrSqMyjy0M5VrrpRnNXF2XfeSwTOMHo
-qFPIqxM67KOvjlnKVQA1S0fIegDCQ0kSapbzoKcvegnM9iCzCTwQ
-Xy0wwlDIJbUm28yssPhUz326PfwNZT7QrGqOTAgMusK2pM2fBi
-nP3bYfpjacbf8gsekpU85ngz6LWP8yZpcYYku27ko4IVDo++mBH
-cMBZM7UyFB1wnhW1nV/Km7l4aE383S+74/X57nQdk8I4UQCSL2
-EyoF9mrIKaqpxRqp7vpEmhsLyYFQH/7QIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAv1ZzctvZ6NkfxetC6caM
+g41IDktxMs9EK0aayZJZifTNSJNPlztZMwyF0sQgichJ+rBtEMFSFoO6m/1LRpVy
+1UPpREvbCq+KPccLD9MFdNc2atwxFzehzQapmuu5mRybP9fao1nPDwKjzI3D7Ceq
+8w3bfs3Lo4zs0jYKRiSGXVmuxz1mQGKaTwLonm4nwwVZ13pTCkBM4G+Vx2OPry1M
+aHG/5JPjK3vgxHl5NJFsNYgm0DsPF08W6cGzafX66dWaCshEmLAB3/s0HNG8yjSc
+0hMX6A2A7w7/IFbTSt2O4Z4sc4H10UmLs+Bm1HDdTQVmvFHgPTySd5zh55MaYFYC
+YQIDAQAB
 -----END PUBLIC KEY-----`
 
 
@@ -29,7 +27,7 @@ exports.doDynamicRegistration = functions.https.onRequest(async (req, res) => {
       const options = {
         hostname: LTIAAS_HOSTNAME,
         port: 443,
-        path: `/register`,
+        path: `/lti/register`,
         method: 'POST',
         timeout: 30000,
         headers: {
@@ -39,8 +37,8 @@ exports.doDynamicRegistration = functions.https.onRequest(async (req, res) => {
         }
       }
       try {
-        await getPromisedApiResponse(options, true, postData);
-        res.send.status(200)({ result: 'Ok' });
+        const value = await getPromisedApiResponse(options, true, postData);
+        res.send({ message: value.result }).status(200);
       } catch(e) {
         res.send({ message: e.message }).status(500);
       }
@@ -59,16 +57,17 @@ exports.getTool = functions.https.onRequest(async (req, res) => {
       const options = {
         hostname: LTIAAS_HOSTNAME,
         port: 443,
-        path: `/account/${LTIAAS_ACCOUNT}/tools/${data.id}`,
+        path: `/admin/tools/${data.id}`,
         method: 'GET',
         timeout: 30000,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${functions.config().env.ltiaas_account_api_key}`,
+          'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`,
         }
       }
       try {
         const result = await getPromisedApiResponse(options);
+        console.log(result)
         res.status(200).send({ result: result });
       } catch(e) {
         res.send({ message: e.message }).status(500);
@@ -103,9 +102,9 @@ exports.registerTool = functions.https.onRequest(async (req, res) => {
     */
     const postData = JSON.stringify(data);
 
-    let path = `/account/${LTIAAS_ACCOUNT}/tools`
+    let path = `/admin/tools`
     if(data.id !== "new") {
-      path = `/account/${LTIAAS_ACCOUNT}/tools/${data.id}`
+      path = `/admin/tools/${data.id}`
     }
 
     const options = {
@@ -117,11 +116,12 @@ exports.registerTool = functions.https.onRequest(async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData),
-        'Authorization': `Bearer ${functions.config().env.ltiaas_account_api_key}`
+        'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`
       }
     }
     try {
       const result = await getPromisedApiResponse(options, true, postData);
+      console.log(result)
       res.status(200).send({ id: result.id });
     } catch(e) {
       res.send({ message: e.message }).status(500);
