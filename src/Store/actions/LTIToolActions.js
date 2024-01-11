@@ -65,7 +65,8 @@ export const addLTITool = (tool) => {
                 id: result.id,
                 name: tool.name,
                 description: tool.description,
-                launchEndpoint: tool.launchEndpoint
+                launchEndpoint: tool.launchEndpoint,
+                clientId: tool.clientId
             })
         })
         .then((result)=>{
@@ -78,22 +79,34 @@ export const addLTITool = (tool) => {
 
 export const removeLTITool = (tool) => {
     return (dispatch, getState, {getFirebase}) => {
-        const firestore = getFirebase().firestore();
-        firestore
-            .collection('tools')
-            .doc(tool.id)
-            .delete()
-            .then(() => {
-                dispatch({
-                    type: 'REMOVED_TOOL'
+        const postData =  {id: tool.id};
+        return fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/deleteTool', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Length': Buffer.byteLength(postData),
+                'Content-Type': 'application/json'
+            },       
+            body: postData
+        }).then(() => {
+            const firestore = getFirebase().firestore();
+            firestore
+                .collection('tools')
+                .doc(tool.id)
+                .delete()
+                .then(() => {
+                    dispatch({
+                        type: 'REMOVED_TOOL'
+                    })
                 })
-            })
-            .catch((err) => {
-                dispatch({
-                    type: 'REMOVE_TASK_ERR',
-                    err
+                .catch((err) => {
+                    dispatch({
+                        type: 'REMOVE_TASK_ERR',
+                        err
+                    })
                 })
-            })
+            }
+        );
     }
 }
 

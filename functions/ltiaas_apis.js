@@ -80,6 +80,38 @@ exports.getTool = functions.https.onRequest(async (req, res) => {
   })
 })
 
+exports.deleteTool = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async() => {
+    try {
+
+      const data = req.body;
+
+      const options = {
+        hostname: LTIAAS_HOSTNAME,
+        port: 443,
+        path: `/admin/tools/${data.id}`,
+        method: 'DELETE',
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`,
+        }
+      }
+      try {
+        const result = await getPromisedApiResponse(options);
+        console.log(result)
+        res.status(200).send({ result: result });
+      } catch(e) {
+        res.send({ message: e.message }).status(500);
+        throw new functions.https.HttpsError('internal', e.message);
+      }
+    } catch (e) {
+        res.send({ message: e.message }).status(500);
+      throw new functions.https.HttpsError('internal', e.message);
+    }
+  })
+})
+
 exports.registerTool = functions.https.onRequest(async (req, res) => {
   cors(req, res, async() => {
     const data = req.body;
@@ -122,7 +154,7 @@ exports.registerTool = functions.https.onRequest(async (req, res) => {
     try {
       const result = await getPromisedApiResponse(options, true, postData);
       console.log(result)
-      res.status(200).send({ id: result.id });
+      res.status(200).send({ id: result.id, clientId: result.clientId });
     } catch(e) {
       res.send({ message: e.message }).status(500);
     }
@@ -163,6 +195,7 @@ exports.LTILaunch = functions.https.onRequest(async (req, res) => {
 
 exports.LTIValidate = functions.https.onCall(async (data, context) => {
   const payload = data.payload;
+  //TODO: get query parameter
   const uid = data.uid;
   try {
 

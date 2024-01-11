@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const admin =  require('firebase-admin');
-const { doDynamicRegistration, getTool, registerTool, LTILaunch, LTIValidate } = require("./ltiaas_apis");
+const { doDynamicRegistration, getTool, deleteTool, registerTool, LTILaunch, LTIValidate } = require("./ltiaas_apis");
 const cors = require('cors')({origin: true})
 admin.initializeApp(functions.config().firebase)
 
@@ -23,6 +23,7 @@ exports.newNotificationAdded = functions
 
 exports.doDynamicRegistration = doDynamicRegistration;
 exports.getTool = getTool;
+exports.deleteTool = deleteTool;
 exports.registerTool = registerTool;
 exports.LTILaunch = LTILaunch;
 exports.LTIValidate = LTIValidate;

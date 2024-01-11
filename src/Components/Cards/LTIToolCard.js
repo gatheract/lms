@@ -32,7 +32,7 @@ const LTIToolCard = ({tools, removeLTITool, admin}) => {
                                     Edit
                                 </a>
                             </Button>
-                            {admin ? <Button onClick={toggle} color="danger"> Remove </Button> : undefined}
+                            <Button onClick={toggle} color="danger">Delete</Button>
                         </CardBody>
                     </Card> 
                     <CustomModal toggle={toggle} modal={isOpen} title="Remove LTITool">
