@@ -153,7 +153,6 @@ exports.registerTool = functions.https.onRequest(async (req, res) => {
     }
     try {
       const result = await getPromisedApiResponse(options, true, postData);
-      console.log(result)
       res.status(200).send({ id: result.id, clientId: result.clientId });
     } catch(e) {
       res.send({ message: e.message }).status(500);

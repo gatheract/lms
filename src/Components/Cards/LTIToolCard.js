@@ -10,9 +10,14 @@ import { removeLTITool } from '../../Store/actions/LTIToolActions'
 
 const LTIToolCard = ({tools, removeLTITool, admin}) => {
     const [isOpen, setIsOpen] = useState(false)
+    const [working, setWorking] = useState(false)
     
     const handleLTIToolRemoval = (tool) => {
-        removeLTITool(tools)
+        setWorking(true);
+        removeLTITool(tool);
+        setIsOpen(false);
+        setWorking(false);
+        window.location.reload();
     }
 
     const toggle = () => setIsOpen(!isOpen)
@@ -38,7 +43,7 @@ const LTIToolCard = ({tools, removeLTITool, admin}) => {
                     <CustomModal toggle={toggle} modal={isOpen} title="Remove LTITool">
                         <Container>
                             <h4>Are you sure?</h4>
-                            <Button color="danger" className="card-button w-25" onClick={() => handleLTIToolRemoval(c)}>Yes</Button>
+                            <Button disabled={working} color="danger" className="card-button w-25" onClick={() => handleLTIToolRemoval(c)}>Yes</Button>
                             <Button color="primary" className="card-button w-25 ml-2 mr-2" onClick={toggle}>No</Button>
                         </Container>
                     </CustomModal>
@@ -50,9 +55,7 @@ const LTIToolCard = ({tools, removeLTITool, admin}) => {
 }
 
 
-
 const mapStateToProps = (state) => {
-    console.log(state)
     return{
         tools: state.firestore.ordered.tools,
     }   

@@ -3,7 +3,6 @@ import { uid } from 'uid';
 
 export const addLTITool = (tool) => {
     return (dispatch, getState, {getFirestore, getFirebase}) => {
-        const firestore = getFirestore();
 
         const permissionsArray = []
         if(tool.permissions_MEMBERSHIPS_READ) {
@@ -44,7 +43,7 @@ export const addLTITool = (tool) => {
             },
             permissions: permissionsArray,
             personalData: tool.personalData,
-        //key-value, via key=value,key=value
+            //key-value, via key=value,key=value
             customParameters: customParametersMap,
             active: tool.active
         }
@@ -60,26 +59,30 @@ export const addLTITool = (tool) => {
         })
         .then((res) => (res.json()))
         .then((result) => {
-            firestore.add({collection: 'tools'},
+            const firestore = getFirebase().firestore();
+            firestore.collection('tools').add(
             {
                 id: result.id,
                 name: tool.name,
                 description: tool.description,
                 launchEndpoint: tool.launchEndpoint,
-                clientId: tool.clientId
-            })
-        })
-        .then((result)=>{
-            dispatch({type:'CREATE_TOOL'});
+                clientId: result.clientId
+            }).then((result)=>{
+                dispatch({type:'CREATE_TOOL'});
+            }).catch((err)=>{
+                console.log(err);
+                dispatch({type:'CREATE_TOOL_ERROR'});
+            });   
         }).catch((err)=>{
+            console.log(err);
             dispatch({type:'CREATE_TOOL_ERROR'});
-        });   
+        }); 
     }
 }
 
 export const removeLTITool = (tool) => {
     return (dispatch, getState, {getFirebase}) => {
-        const postData =  {id: tool.id};
+        const postData =  JSON.stringify({id: tool.id});
         return fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/deleteTool', {
             method: 'POST',
             headers: {
@@ -88,25 +91,29 @@ export const removeLTITool = (tool) => {
                 'Content-Type': 'application/json'
             },       
             body: postData
-        }).then(() => {
+        })
+        .then((res) => (res.json()))
+        .then((res) => {
             const firestore = getFirebase().firestore();
-            firestore
-                .collection('tools')
-                .doc(tool.id)
-                .delete()
-                .then(() => {
-                    dispatch({
-                        type: 'REMOVED_TOOL'
-                    })
+            firestore.collection('tools')
+            .where("id", "==", tool.id).get()
+            .then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    doc.ref.delete();
+                });
+            })
+            .then(() => {
+                dispatch({
+                    type: 'REMOVED_TOOL'
                 })
-                .catch((err) => {
-                    dispatch({
-                        type: 'REMOVE_TASK_ERR',
-                        err
-                    })
+            })
+            .catch((err) => {
+                dispatch({
+                    type: 'REMOVE_TASK_ERR',
+                    err
                 })
-            }
-        );
+            })
+        });
     }
 }
 
