@@ -11,6 +11,7 @@ import { removeLTITool } from '../../Store/actions/LTIToolActions'
 const LTIToolCard = ({tools, removeLTITool, admin}) => {
     const [isOpen, setIsOpen] = useState(false)
     const [working, setWorking] = useState(false)
+    const LTIAAS_HOSTNAME = "lms.test-br.ltiaas.com";
     
     const handleLTIToolRemoval = (tool) => {
         setWorking(true);
@@ -30,8 +31,14 @@ const LTIToolCard = ({tools, removeLTITool, admin}) => {
                     <Card className="course-card">
                         <CardBody>
                             <CardTitle className="course-t"><strong>{c.name}</strong></CardTitle>
-                            <CardSubtitle className="mb-2 subtitle">{c.description}</CardSubtitle>
-                            <CardSubtitle className="mb-2 subtitle">{c.launchEndpoint}</CardSubtitle>
+                            <CardSubtitle className="mb-4 subtitle">{c.description}</CardSubtitle>
+                            <CardSubtitle className="mb-2 subtitle">ClientId: <pre>{c.clientId}</pre></CardSubtitle>
+                            <CardSubtitle className="mb-2 subtitle">url: <pre>https://{LTIAAS_HOSTNAME}</pre></CardSubtitle>
+                            <CardSubtitle className="mb-2 subtitle">authenticationEndpoint: <pre>https://{LTIAAS_HOSTNAME}/lti/authenticate</pre></CardSubtitle>
+                            <CardSubtitle className="mb-2 subtitle">accesstokenEndpoint: <pre>https://{LTIAAS_HOSTNAME}/lti/authorize</pre></CardSubtitle>
+                            <CardSubtitle className="mb-2 subtitle">authorizationServer: <pre>https://{LTIAAS_HOSTNAME}/lti/authorize</pre></CardSubtitle>
+                            <CardSubtitle className="mb-2 subtitle">authConfig Method: <pre>JWK_SET</pre></CardSubtitle>
+                            <CardSubtitle className="mb-2 subtitle">authConfig Key: <pre>https://{LTIAAS_HOSTNAME}/lti/keys</pre></CardSubtitle>
                             <Button  color="primary" className="mr-3">
                                 <a href={`/tools/${c.id}`} className="link">
                                     Edit
