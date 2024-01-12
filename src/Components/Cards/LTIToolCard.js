@@ -18,7 +18,6 @@ const LTIToolCard = ({tools, removeLTITool, admin}) => {
         removeLTITool(tool);
         setIsOpen(false);
         setWorking(false);
-        window.location.reload();
     }
 
     const toggle = () => setIsOpen(!isOpen)
