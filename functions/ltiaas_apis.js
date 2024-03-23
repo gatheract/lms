@@ -3,6 +3,7 @@ const cors = require('cors')({origin: true})
 const https = require('https');
 var jwt = require('jsonwebtoken');
 const admin = require('firebase-admin');
+const { user } = require("firebase-functions/lib/providers/auth");
 
 const LTIAAS_HOSTNAME = "lms.test-br.ltiaas.com" // <- LTIAAS-test_brazil
 const LTIAAS_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
@@ -238,8 +239,8 @@ exports.LTIValidate = functions.https.onCall(async (data, context) => {
       },
       context: {
         id: course.courseId,
-        label: course.branch,
-        title: course.title
+        /*label: course.branch,
+        title: course.title*/
       },
       resource: {
         id: tool.id,
@@ -274,6 +275,57 @@ exports.LTIValidate = functions.https.onCall(async (data, context) => {
   }
 })
 
+exports.LTIServices = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async() => {
+    const payload = req.body.payload;
+    try {
+
+      let decoded = undefined;
+      try {
+        // Verify the JWT with the public Key given by LTIAAS
+        decoded = jwt.verify(payload, LTIAAS_PUBLIC_KEY);
+        if(decoded.type === "MEMBERSHIPS_GET") {
+          // normally we would check `decoded.parameters.context`
+          // before we select which users to send back
+          const users = [];
+          const docs = await admin.firestore().collection('users').get();
+          docs.forEach((doc) => {
+            users.push({
+              id: doc.id,
+              givenName: doc.data().name.split(" ")[0],
+              familyName: doc.data().name.split(" ")[1],
+              middleName: "",
+              email: doc.data().email,
+              roles: [doc.data().userType === "Admin" || doc.data().userType === "Teacher" ? "CONTEXT_INSTRUCTOR" : "CONTEXT_LEARNER"]
+            });
+          });
+          const courseDocs = await admin.firestore().collection('courses').where('courseId', '==', decoded.parameters.context).get();
+          let course = {};
+          courseDocs.forEach((doc) => {
+            //TODO: check that we only got one doc
+            course = doc.data();
+          });
+          const message = {
+            context: {
+              id: decoded.parameters.context,
+              label: course.branch,
+              title: course.title
+            },
+            members: users
+          }
+          res.send(message).status(200);
+        }
+      } catch(err) {
+        throw new functions.https.HttpsError('internal', `Service Failure: ${err.message}, payload=${payload}`);
+      }
+
+      res.send({ error: "An error occurred"}).status(500);
+
+    } catch (e) {
+      throw new functions.https.HttpsError('internal', e.message);
+    }
+  })
+});
 
 const getPromisedApiResponse = (options, json=true, postData=null) => {
 	return new Promise((resolve, reject) => {
