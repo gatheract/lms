@@ -191,16 +191,11 @@ export const removeTool = (course, tool) => {
     return (dispatch, getState, {getFirebase}) => {
         const firebase = getFirebase();
         const firestore = getFirebase().firestore();
-
         firestore
             .collection('courses')
             .doc(course[0].id)
             .update({
-                tools: firebase.firestore.FieldValue.arrayRemove({
-                    name: tool.name,
-                    id: tool.id,
-                    url: tool.url
-                })
+                tools: firebase.firestore.FieldValue.arrayRemove(tool)
             })
             .catch((err)=> {
                 console.log(err)

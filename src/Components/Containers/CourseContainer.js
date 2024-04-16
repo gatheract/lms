@@ -33,6 +33,20 @@ const CourseContainer = ({course, profile, auth}) => {
     const resourceFormToggle = () =>  setIsResourcesFormOpen(!isResourcesFormOpen);
     const toolFormToggle = () =>  setIsToolsFormOpen(!isToolsFormOpen);
 
+    React.useEffect(() => {
+        window.addEventListener(
+            "message",
+            (ev) => {
+              if (typeof ev.data !== "object") return;
+              if (!ev.data.type) return;
+              if (ev.data.type !== "button-click") return;
+              if (!ev.data.message) return;
+              // we got a message, close the form
+              setIsToolsFormOpen(false);
+            }
+        );
+    })
+
     return(
         <Col>
             <Row>
@@ -92,7 +106,7 @@ const CourseContainer = ({course, profile, auth}) => {
                 <AddResourcesForm course={course}></AddResourcesForm>
             </CustomModal>
             <CustomModal modal={isToolsFormOpen} title="Add New LTI Tool" toggle={toolFormToggle}>
-                <AddLTIToolForm course={course}></AddLTIToolForm>
+                <AddLTIToolForm course={course} userId={auth.uid}></AddLTIToolForm>
             </CustomModal>
         </Col>
   )

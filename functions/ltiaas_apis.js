@@ -3,19 +3,17 @@ const cors = require('cors')({origin: true})
 const https = require('https');
 var jwt = require('jsonwebtoken');
 const admin = require('firebase-admin');
-const { user } = require("firebase-functions/lib/providers/auth");
 
 const LTIAAS_HOSTNAME = "lms.test-br.ltiaas.com" // <- LTIAAS-test_brazil
 const LTIAAS_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAv1ZzctvZ6NkfxetC6caM
-g41IDktxMs9EK0aayZJZifTNSJNPlztZMwyF0sQgichJ+rBtEMFSFoO6m/1LRpVy
-1UPpREvbCq+KPccLD9MFdNc2atwxFzehzQapmuu5mRybP9fao1nPDwKjzI3D7Ceq
-8w3bfs3Lo4zs0jYKRiSGXVmuxz1mQGKaTwLonm4nwwVZ13pTCkBM4G+Vx2OPry1M
-aHG/5JPjK3vgxHl5NJFsNYgm0DsPF08W6cGzafX66dWaCshEmLAB3/s0HNG8yjSc
-0hMX6A2A7w7/IFbTSt2O4Z4sc4H10UmLs+Bm1HDdTQVmvFHgPTySd5zh55MaYFYC
-YQIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuySCG+2s7ATwK0dNwgop
+MVWhs/6THqLOtRQKgY3w7UyAUXucccfOmZQi/E3PYIJN8Hx0fzk+LeRkPr1DAHrt
+l7Lj1IOmwW2bXVbsQdNpIK0/ho/yJlytZQi6JFQSwNICToybUFoGzPHIbw7INaJd
+OHzqUNt4593vSpxTGSG/aJOrNHTvD9Q4h4ODFD65eJg0TiCGpBh248F83s9XNnx6
++I+Lud4bQ6C+x/Bm+5saC88ZDtEmRRtOnwLvkMW4of/eW952/djSgPiVI1aoJlPR
+b/HmNE1IPlSUMLoQuxOvr4cV3vbLqU5mSyvaYinxqIkclbfsWY5tPJSEuKBt2JMj
+qQIDAQAB
 -----END PUBLIC KEY-----`
-
 
 exports.doDynamicRegistration = functions.https.onRequest(async (req, res) => {
   cors(req, res, async() => {
@@ -193,9 +191,40 @@ exports.LTILaunch = functions.https.onRequest(async (req, res) => {
   })
 })
 
+exports.LTIDeepLinkingLaunch = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async() => {
+    try {
+      const data = req.body;
+      
+      const postData = JSON.stringify(data);
+
+      const options = {
+        hostname: LTIAAS_HOSTNAME,
+        port: 443,
+        path: `/api/launch/deeplinking/form`,
+        method: 'POST',
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData),
+          'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`,
+        }
+      }
+      try {
+        const result = await getPromisedApiResponse(options, true, postData);
+        res.send({ result: result }).status(200);
+        return { result: result };
+      } catch(e) {
+        res.send({ message: e.message }).status(500);
+      }
+    } catch (e) {
+      res.send({ message: e.message }).status(500);
+    }
+  })
+})
+
 exports.LTIValidate = functions.https.onCall(async (data, context) => {
   const payload = data.payload;
-  //TODO: get query parameter
   const uid = data.uid;
   try {
 
@@ -275,54 +304,172 @@ exports.LTIValidate = functions.https.onCall(async (data, context) => {
   }
 })
 
+exports.LTIDeepLinkingValidate = functions.https.onCall(async (data, context) => {
+  const payload = data.payload;
+  const uid = data.uid;
+  try {
+
+    let decoded = undefined;
+    try {
+      // Verify the JWT with the public Key given by LTIAAS
+      decoded = jwt.verify(payload, LTIAAS_PUBLIC_KEY);
+    } catch(err) {
+      throw new functions.https.HttpsError('internal', `JWT Verification Failed: ${err.message}, payload=${payload}`);
+    }
+
+    //TODO: check that front-end userid matches parameters.user
+    if(decoded.parameters.user != uid) {
+      throw new functions.https.HttpsError('internal', `${decoded.parameters.user} does not match logged in user: ${uid}`);
+    }
+
+    // Get information about the requested launch context to send back to the learning tool via the idToken
+    const doc = await admin.firestore().collection('users').doc(decoded.parameters.user).get();
+    const user = doc.data();
+    const courseDoc = await admin.firestore().collection('courses').doc(decoded.parameters.context).get();
+    const course = courseDoc.data();
+    const tool = course.tools.find((tool) => tool.id === decoded.parameters.resource);
+    const roles = [];
+    if(user.userType === "Admin" || user.userType === "Teacher") {
+      roles.push("CONTEXT_INSTRUCTOR")
+    }
+    if(user.userType === "Student") {
+      roles.push("CONTEXT_LEARNER")
+    }
+    
+    // Build the request object
+    const data = {
+      metadata: decoded.metadata,
+      user: {
+        id: decoded.parameters.user,
+        name: user.name,
+        email: user.email,
+        givenName: user.name.split(" ")[0],
+        familyName: user.name.split(" ")[1],
+        roles: roles,
+      },
+      context: {
+        id: course.courseId,
+        /*label: course.branch,
+        title: course.title*/
+      }
+      // don't send resource ona deep-linking launch
+      /*resource: {
+        id: tool.id,
+        title: tool.name,
+        description: tool.name
+      }*/
+    }
+    const postData = JSON.stringify(data);
+
+    const options = {
+      hostname: LTIAAS_HOSTNAME,
+      port: 443,
+      path: `/api/idtoken/deeplinking`,
+      method: 'POST',
+      timeout: 30000,
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData),
+        'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`,
+      }
+    }
+    try {
+      const result = await getPromisedApiResponse(options, true, postData);
+      // LTIAAS sends us a self-submitting form to append to the body.
+      // This form redirects to the tool launch URL
+      return result;
+    } catch(e) {
+      throw new functions.https.HttpsError('internal', e.message);
+    }
+  } catch (e) {
+    throw new functions.https.HttpsError('internal', e.message);
+  }
+})
+
 exports.LTIServices = functions.https.onRequest(async (req, res) => {
   cors(req, res, async() => {
     const payload = req.body.payload;
+    let decoded = undefined;
     try {
-
-      let decoded = undefined;
-      try {
-        // Verify the JWT with the public Key given by LTIAAS
-        decoded = jwt.verify(payload, LTIAAS_PUBLIC_KEY);
-        if(decoded.type === "MEMBERSHIPS_GET") {
-          // normally we would check `decoded.parameters.context`
-          // before we select which users to send back
-          const users = [];
-          const docs = await admin.firestore().collection('users').get();
-          docs.forEach((doc) => {
-            users.push({
-              id: doc.id,
-              givenName: doc.data().name.split(" ")[0],
-              familyName: doc.data().name.split(" ")[1],
-              middleName: "",
-              email: doc.data().email,
-              roles: [doc.data().userType === "Admin" || doc.data().userType === "Teacher" ? "CONTEXT_INSTRUCTOR" : "CONTEXT_LEARNER"]
-            });
+      // Verify the JWT with the public Key given by LTIAAS
+      decoded = jwt.verify(payload, LTIAAS_PUBLIC_KEY);
+      if(decoded.type === "MEMBERSHIPS_GET") {
+        // normally we would check `decoded.parameters.context`
+        // before we select which users to send back
+        const users = [];
+        const docs = await admin.firestore().collection('users').get();
+        docs.forEach((doc) => {
+          users.push({
+            id: doc.id,
+            givenName: doc.data().name.split(" ")[0],
+            familyName: doc.data().name.split(" ")[1],
+            middleName: "",
+            email: doc.data().email,
+            roles: [doc.data().userType === "Admin" || doc.data().userType === "Teacher" ? "CONTEXT_INSTRUCTOR" : "CONTEXT_LEARNER"]
           });
-          const courseDocs = await admin.firestore().collection('courses').where('courseId', '==', decoded.parameters.context).get();
-          let course = {};
-          courseDocs.forEach((doc) => {
-            //TODO: check that we only got one doc
-            course = doc.data();
-          });
-          const message = {
-            context: {
-              id: decoded.parameters.context,
-              label: course.branch,
-              title: course.title
-            },
-            members: users
-          }
-          res.send(message).status(200);
+        });
+        const courseDocs = await admin.firestore().collection('courses').where('courseId', '==', decoded.parameters.context).get();
+        let course = {};
+        courseDocs.forEach((doc) => {
+          //TODO: check that we only got one doc
+          course = doc.data();
+        });
+        const message = {
+          context: {
+            id: decoded.parameters.context,
+            label: course.branch,
+            title: course.title
+          },
+          members: users
         }
-      } catch(err) {
-        throw new functions.https.HttpsError('internal', `Service Failure: ${err.message}, payload=${payload}`);
+        res.send(message).status(200);
+      } else if(decoded.type === "DEEP_LINKING_RESPONSE") {
+
+        // get the tool from the DB
+        const toolDocs = await admin.firestore().collection('tools').where('clientId', '==', decoded.parameters.clientId).limit(1).get();
+        let tool = {};
+        toolDocs.forEach((doc) => {
+          tool = doc.data();
+        });
+        if(!tool) {
+          // we can't find the tool.
+          // Throw an error
+          res.send("LTI tool not found").status(400);
+        }
+        // update the default url and name of the tool before storing associating it with the course.
+        tool.launchEndpoint = decoded.parameters.contentItems[0].url;
+        tool.name = decoded.parameters.contentItems[0].title;
+        
+        const courseDocs = await admin.firestore().collection('courses').where('courseId', '==', decoded.parameters.context).get();
+        let courseId = {};
+        courseDocs.forEach((doc) => {
+          //TODO: check that we only got one doc
+          courseId = doc.id;
+        });
+
+        // Add the tool ot the course
+        await admin.firestore().collection('courses').doc(courseId)
+          .update({
+              tools: admin.firestore.FieldValue.arrayUnion(tool)
+          })
+        // refresh the window
+        const html = `<html><head><script>
+        window.parent.postMessage(
+          {
+            type: "deep-linking-complete"
+          },
+          "*"
+        );
+        </script></head><body><p>Deep Linking Complete</body></html>`;
+        //res.content_type = 'text/html';
+        res.send(html).status(200);
+      } else {
+        res.send({ error: "An error occurred"}).status(500);
       }
 
-      res.send({ error: "An error occurred"}).status(500);
-
     } catch (e) {
-      throw new functions.https.HttpsError('internal', e.message);
+      console.log(e)
+      res.send({ error: e.message}).status(500);
     }
   })
 });

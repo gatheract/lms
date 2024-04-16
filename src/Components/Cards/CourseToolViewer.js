@@ -28,9 +28,9 @@ const CourseToolViewer = ({tool, course, userId, profile, removeTool}) => {
         fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/LTILaunch', {
             method: 'POST',
             headers: {
-            'Accept': 'application/json',
-            'Content-Length': Buffer.byteLength(postData),
-            'Content-Type': 'application/json'
+                'Accept': 'application/json',
+                'Content-Length': Buffer.byteLength(postData),
+                'Content-Type': 'application/json'
             },
             body: postData
         }).then((res) => (res.json()))
@@ -55,7 +55,7 @@ const CourseToolViewer = ({tool, course, userId, profile, removeTool}) => {
             </>
             }
             {launchForm &&
-                    <Button color="warning" className="button ml-2 w-25" onClick={() => {setLaunchForm(false);setLoading(false)}}>Close Tool</Button>
+                <Button color="warning" className="button ml-2 w-25" onClick={() => {setLaunchForm(false);setLoading(false)}}>Close Tool</Button>
             }
             </CardTitle>
             {launchForm && <iframe key={tool.id} frameBorder="0" width="100%" height="600" title="LTI launch" src={"data:text/html,"+encodeURIComponent(launchForm)}>Browser not compatible with iframes.</iframe>}

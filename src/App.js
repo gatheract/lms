@@ -12,6 +12,7 @@ import ErrorPage from './Errorpage';
 import CustomNavbar from './Components/Navbar/Navbar';
 import {ADMIN_ROUTES, STUDENT_ROUTES, TEACHER_ROUTES} from './Routes'
 import LTIValidate from './Components/LTIValidate';
+import LTIDeepLinkingValidate from './Components/LTIDeepLinkingValidate';
 
 class App extends React.Component{
   render(){
@@ -42,6 +43,12 @@ class App extends React.Component{
             auth && auth.uid && <Route
               path="/LTIValidate"
               render={(props) => <LTIValidate {...props} uid={auth.uid} />}
+            />
+          }
+          {
+            auth && auth.uid && <Route
+              path="/LTIDeepLinkingValidate"
+              render={(props) => <LTIDeepLinkingValidate {...props} uid={auth.uid} />}
             />
           }
           {

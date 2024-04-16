@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const admin =  require('firebase-admin');
-const { doDynamicRegistration, getTool, deleteTool, registerTool, LTILaunch, LTIValidate, LTIServices } = require("./ltiaas_apis");
+const { doDynamicRegistration, getTool, deleteTool, registerTool, LTILaunch, LTIValidate, LTIServices, LTIDeepLinkingLaunch, LTIDeepLinkingValidate } = require("./ltiaas_apis");
 const cors = require('cors')({origin: true})
 admin.initializeApp(functions.config().firebase)
 
@@ -26,7 +26,9 @@ exports.getTool = getTool;
 exports.deleteTool = deleteTool;
 exports.registerTool = registerTool;
 exports.LTILaunch = LTILaunch;
+exports.LTIDeepLinkingLaunch = LTIDeepLinkingLaunch;
 exports.LTIValidate = LTIValidate;
+exports.LTIDeepLinkingValidate = LTIDeepLinkingValidate;
 exports.LTIServices = LTIServices;
 
 exports.addAdmin = functions.https.onRequest(async (req, res) => {
