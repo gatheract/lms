@@ -13,7 +13,7 @@ const CourseToolViewer = ({tool, course, userId, profile, removeTool}) => {
     const [loading, setLoading] = useState(false);
     const [launchForm, setLaunchForm] = useState(false);
 
-    const launchTool = (course, tool) => {
+    const getLaunchForm = async (course, tool) => {
         const post_data = {
             clientId: tool.id,
             context: course[0].id,
@@ -23,21 +23,35 @@ const CourseToolViewer = ({tool, course, userId, profile, removeTool}) => {
             //personalData` - Optional
             //customParameters` - Optional
         }
-        const postData = JSON.stringify(post_data);
         setLoading(true);
-        fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/LTILaunch', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Length': Buffer.byteLength(postData),
-                'Content-Type': 'application/json'
-            },
-            body: postData
-        }).then((res) => (res.json()))
-        .then(res => {
-            console.log(res)
-            setLaunchForm(res.result.form);
-        })
+        try {
+            const postData = await JSON.stringify(post_data);
+            const res = await fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/LTILaunch', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Length': Buffer.byteLength(postData),
+                    'Content-Type': 'application/json'
+                },
+                body: postData
+            });
+            const data = await res.json();
+            return data.result.form;
+        } catch(e) {
+            return `<h1>Launch Failed:${e.message}`
+        }
+    }
+
+    const launchTool = async (course, tool, newTab = false) => {
+        const form = await getLaunchForm(course, tool);
+        if(newTab) {
+            const win = window.open();
+            win.document.write(form);
+            win.focus();
+            setLoading(false)
+        } else {
+            setLaunchForm(form);
+        }
     }
 
     return(
@@ -47,7 +61,10 @@ const CourseToolViewer = ({tool, course, userId, profile, removeTool}) => {
             {!launchForm &&
             <>
                 <Button className="button w-25 ml-2 view-button" disabled={loading} onClick={() => launchTool(course, tool)}>
-                    {loading ? "Loading..." : "View"}
+                    {loading ? "Loading..." : "View In iFrame"}
+                </Button>
+                <Button className="button w-25 ml-2 view-button" disabled={loading} onClick={async () => await launchTool(course, tool, true)}>
+                    {loading ? "Loading..." : "View In New Tab"}
                 </Button>
                 { profile.userType === "Student" ? null : 
                     <Button color="danger" className="button ml-2 w-25" onClick={() => handleDelete(course, tool)}>Remove</Button>
