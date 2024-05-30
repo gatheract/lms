@@ -1,8 +1,10 @@
-const functions = require("firebase-functions");
+const { defineSecret } = require('firebase-functions/params');
+const {onRequest, onCall, HttpsError} = require("firebase-functions/v2/https");
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const cors = require('cors')({origin: true})
 const https = require('https');
 var jwt = require('jsonwebtoken');
-const admin = require('firebase-admin');
+const ltiaasApiKey = defineSecret('LTIAAS_API_KEY');
 
 const LTIAAS_HOSTNAME = "lms.test-br.ltiaas.com" // <- LTIAAS-test_brazil
 const LTIAAS_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
@@ -15,7 +17,7 @@ b/HmNE1IPlSUMLoQuxOvr4cV3vbLqU5mSyvaYinxqIkclbfsWY5tPJSEuKBt2JMj
 qQIDAQAB
 -----END PUBLIC KEY-----`
 
-exports.doDynamicRegistration = functions.https.onRequest(async (req, res) => {
+exports.doDynamicRegistration = onRequest({ secrets: [ltiaasApiKey] }, async (req, res) => {
   cors(req, res, async() => {
     try {
       const data = {
@@ -31,7 +33,7 @@ exports.doDynamicRegistration = functions.https.onRequest(async (req, res) => {
         timeout: 30000,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`,
+          'Authorization': `Bearer ${ltiaasApiKey.value()}`,
           'Content-Length': Buffer.byteLength(postData)
         }
       }
@@ -47,7 +49,7 @@ exports.doDynamicRegistration = functions.https.onRequest(async (req, res) => {
   })
 })
 
-exports.getTool = functions.https.onRequest(async (req, res) => {
+exports.getTool = onRequest({ secrets: [ltiaasApiKey] }, async (req, res) => {
   cors(req, res, async() => {
     try {
 
@@ -61,7 +63,7 @@ exports.getTool = functions.https.onRequest(async (req, res) => {
         timeout: 30000,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`,
+          'Authorization': `Bearer ${ltiaasApiKey.value()}`,
         }
       }
       try {
@@ -70,16 +72,16 @@ exports.getTool = functions.https.onRequest(async (req, res) => {
         res.status(200).send({ result: result });
       } catch(e) {
         res.send({ message: e.message }).status(500);
-        throw new functions.https.HttpsError('internal', e.message);
+        throw new HttpsError('internal', e.message);
       }
     } catch (e) {
         res.send({ message: e.message }).status(500);
-      throw new functions.https.HttpsError('internal', e.message);
+      throw new HttpsError('internal', e.message);
     }
   })
 })
 
-exports.deleteTool = functions.https.onRequest(async (req, res) => {
+exports.deleteTool = onRequest({ secrets: [ltiaasApiKey] }, async (req, res) => {
   cors(req, res, async() => {
     try {
 
@@ -93,7 +95,7 @@ exports.deleteTool = functions.https.onRequest(async (req, res) => {
         timeout: 30000,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`,
+          'Authorization': `Bearer ${ltiaasApiKey.value()}`,
         }
       }
       try {
@@ -102,16 +104,16 @@ exports.deleteTool = functions.https.onRequest(async (req, res) => {
         res.status(200).send({ result: result });
       } catch(e) {
         res.send({ message: e.message }).status(500);
-        throw new functions.https.HttpsError('internal', e.message);
+        throw new HttpsError('internal', e.message);
       }
     } catch (e) {
         res.send({ message: e.message }).status(500);
-      throw new functions.https.HttpsError('internal', e.message);
+      throw new HttpsError('internal', e.message);
     }
   })
 })
 
-exports.registerTool = functions.https.onRequest(async (req, res) => {
+exports.registerTool = onRequest({ secrets: [ltiaasApiKey] }, async (req, res) => {
   cors(req, res, async() => {
     const data = req.body;
     /*
@@ -147,7 +149,7 @@ exports.registerTool = functions.https.onRequest(async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData),
-        'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`
+        'Authorization': `Bearer ${ltiaasApiKey.value()}`
       }
     }
     try {
@@ -159,7 +161,7 @@ exports.registerTool = functions.https.onRequest(async (req, res) => {
   })
 })
 
-exports.LTILaunch = functions.https.onRequest(async (req, res) => {
+exports.LTILaunch = onRequest({ secrets: [ltiaasApiKey] }, async (req, res) => {
   cors(req, res, async() => {
     try {
       const data = req.body;
@@ -175,7 +177,7 @@ exports.LTILaunch = functions.https.onRequest(async (req, res) => {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(postData),
-          'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`,
+          'Authorization': `Bearer ${ltiaasApiKey.value()}`,
         }
       }
       try {
@@ -191,7 +193,7 @@ exports.LTILaunch = functions.https.onRequest(async (req, res) => {
   })
 })
 
-exports.LTIDeepLinkingLaunch = functions.https.onRequest(async (req, res) => {
+exports.LTIDeepLinkingLaunch = onRequest({ secrets: [ltiaasApiKey] }, async (req, res) => {
   cors(req, res, async() => {
     try {
       const data = req.body;
@@ -207,7 +209,7 @@ exports.LTIDeepLinkingLaunch = functions.https.onRequest(async (req, res) => {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(postData),
-          'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`,
+          'Authorization': `Bearer ${ltiaasApiKey.value()}`,
         }
       }
       try {
@@ -223,9 +225,10 @@ exports.LTIDeepLinkingLaunch = functions.https.onRequest(async (req, res) => {
   })
 })
 
-exports.LTIValidate = functions.https.onCall(async (data, context) => {
-  const payload = data.payload;
-  const uid = data.uid;
+exports.LTIValidate = onCall({ secrets: [ltiaasApiKey] }, async (request) => {
+  
+  const payload = request.data.payload;
+  const uid = request.auth.uid;
   try {
 
     let decoded = undefined;
@@ -233,18 +236,18 @@ exports.LTIValidate = functions.https.onCall(async (data, context) => {
       // Verify the JWT with the public Key given by LTIAAS
       decoded = jwt.verify(payload, LTIAAS_PUBLIC_KEY);
     } catch(err) {
-      throw new functions.https.HttpsError('internal', `JWT Verification Failed: ${err.message}, payload=${payload}`);
+      throw new HttpsError('internal', `JWT Verification Failed: ${err.message}, payload=${payload}`);
     }
 
     //TODO: check that front-end userid matches parameters.user
     if(decoded.parameters.user != uid) {
-      throw new functions.https.HttpsError('internal', `${decoded.parameters.user} does not match logged in user: ${uid}`);
+      throw new HttpsError('internal', `${decoded.parameters.user} does not match logged in user: ${uid}`);
     }
 
     // Get information about the requested launch context to send back to the learning tool via the idToken
-    const doc = await admin.firestore().collection('users').doc(decoded.parameters.user).get();
+    const doc = await getFirestore().collection('users').doc(decoded.parameters.user).get();
     const user = doc.data();
-    const courseDoc = await admin.firestore().collection('courses').doc(decoded.parameters.context).get();
+    const courseDoc = await getFirestore().collection('courses').doc(decoded.parameters.context).get();
     const course = courseDoc.data();
     const tool = course.tools.find((tool) => tool.id === decoded.parameters.resource);
     const roles = [];
@@ -288,7 +291,7 @@ exports.LTIValidate = functions.https.onCall(async (data, context) => {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData),
-        'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`,
+        'Authorization': `Bearer ${ltiaasApiKey.value()}`,
       }
     }
     try {
@@ -297,16 +300,16 @@ exports.LTIValidate = functions.https.onCall(async (data, context) => {
       // This form redirects to the tool launch URL
       return result;
     } catch(e) {
-      throw new functions.https.HttpsError('internal', e.message);
+      throw new HttpsError('internal', e.message);
     }
   } catch (e) {
-    throw new functions.https.HttpsError('internal', e.message);
+    throw new HttpsError('internal', e.message);
   }
 })
 
-exports.LTIDeepLinkingValidate = functions.https.onCall(async (data, context) => {
-  const payload = data.payload;
-  const uid = data.uid;
+exports.LTIDeepLinkingValidate = onCall({ secrets: [ltiaasApiKey] }, async (request) => {
+  const payload = request.data.payload;
+  const uid = request.auth.uid;
   try {
 
     let decoded = undefined;
@@ -314,18 +317,18 @@ exports.LTIDeepLinkingValidate = functions.https.onCall(async (data, context) =>
       // Verify the JWT with the public Key given by LTIAAS
       decoded = jwt.verify(payload, LTIAAS_PUBLIC_KEY);
     } catch(err) {
-      throw new functions.https.HttpsError('internal', `JWT Verification Failed: ${err.message}, payload=${payload}`);
+      throw new HttpsError('internal', `JWT Verification Failed: ${err.message}, payload=${payload}`);
     }
 
     //TODO: check that front-end userid matches parameters.user
     if(decoded.parameters.user != uid) {
-      throw new functions.https.HttpsError('internal', `${decoded.parameters.user} does not match logged in user: ${uid}`);
+      throw new HttpsError('internal', `${decoded.parameters.user} does not match logged in user: ${uid}`);
     }
 
     // Get information about the requested launch context to send back to the learning tool via the idToken
-    const doc = await admin.firestore().collection('users').doc(decoded.parameters.user).get();
+    const doc = await getFirestore().collection('users').doc(decoded.parameters.user).get();
     const user = doc.data();
-    const courseDoc = await admin.firestore().collection('courses').doc(decoded.parameters.context).get();
+    const courseDoc = await getFirestore().collection('courses').doc(decoded.parameters.context).get();
     const course = courseDoc.data();
     const tool = course.tools.find((tool) => tool.id === decoded.parameters.resource);
     const roles = [];
@@ -370,7 +373,7 @@ exports.LTIDeepLinkingValidate = functions.https.onCall(async (data, context) =>
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData),
-        'Authorization': `Bearer ${functions.config().env.ltiaas_api_key}`,
+        'Authorization': `Bearer ${ltiaasApiKey.value()}`,
       }
     }
     try {
@@ -379,14 +382,14 @@ exports.LTIDeepLinkingValidate = functions.https.onCall(async (data, context) =>
       // This form redirects to the tool launch URL
       return result;
     } catch(e) {
-      throw new functions.https.HttpsError('internal', e.message);
+      throw new HttpsError('internal', e.message);
     }
   } catch (e) {
-    throw new functions.https.HttpsError('internal', e.message);
+    throw new HttpsError('internal', e.message);
   }
 })
 
-exports.LTIServices = functions.https.onRequest(async (req, res) => {
+exports.LTIServices = onRequest(async (req, res) => {
   cors(req, res, async() => {
     const payload = req.body.payload;
     let decoded = undefined;
@@ -397,7 +400,7 @@ exports.LTIServices = functions.https.onRequest(async (req, res) => {
         // normally we would check `decoded.parameters.context`
         // before we select which users to send back
         const users = [];
-        const docs = await admin.firestore().collection('users').get();
+        const docs = await getFirestore().collection('users').get();
         docs.forEach((doc) => {
           users.push({
             id: doc.id,
@@ -408,7 +411,7 @@ exports.LTIServices = functions.https.onRequest(async (req, res) => {
             roles: [doc.data().userType === "Admin" || doc.data().userType === "Teacher" ? "CONTEXT_INSTRUCTOR" : "CONTEXT_LEARNER"]
           });
         });
-        const courseDocs = await admin.firestore().collection('courses').where('courseId', '==', decoded.parameters.context).get();
+        const courseDocs = await getFirestore().collection('courses').where('courseId', '==', decoded.parameters.context).get();
         let course = {};
         courseDocs.forEach((doc) => {
           //TODO: check that we only got one doc
@@ -426,7 +429,7 @@ exports.LTIServices = functions.https.onRequest(async (req, res) => {
       } else if(decoded.type === "DEEP_LINKING_RESPONSE") {
 
         // get the tool from the DB
-        const toolDocs = await admin.firestore().collection('tools').where('clientId', '==', decoded.parameters.clientId).limit(1).get();
+        const toolDocs = await getFirestore().collection('tools').where('clientId', '==', decoded.parameters.clientId).limit(1).get();
         let tool = {};
         toolDocs.forEach((doc) => {
           tool = doc.data();
@@ -440,7 +443,7 @@ exports.LTIServices = functions.https.onRequest(async (req, res) => {
         tool.launchEndpoint = decoded.parameters.contentItems[0].url;
         tool.name = decoded.parameters.contentItems[0].title;
         
-        const courseDocs = await admin.firestore().collection('courses').where('courseId', '==', decoded.parameters.context).get();
+        const courseDocs = await getFirestore().collection('courses').where('courseId', '==', decoded.parameters.context).get();
         let courseId = {};
         courseDocs.forEach((doc) => {
           //TODO: check that we only got one doc
@@ -448,9 +451,9 @@ exports.LTIServices = functions.https.onRequest(async (req, res) => {
         });
 
         // Add the tool ot the course
-        await admin.firestore().collection('courses').doc(courseId)
+        await getFirestore().collection('courses').doc(courseId)
           .update({
-              tools: admin.firestore.FieldValue.arrayUnion(tool)
+              tools: FieldValue.arrayUnion(tool)
           })
         // refresh the window
         const html = `<html><head><script>

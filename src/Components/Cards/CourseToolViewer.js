@@ -26,7 +26,8 @@ const CourseToolViewer = ({tool, course, userId, profile, removeTool}) => {
         setLoading(true);
         try {
             const postData = await JSON.stringify(post_data);
-            const res = await fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/LTILaunch', {
+            //const res = await fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/LTILaunch', {
+            const res = await fetch('https://ltilaunch-ulta7xj7hq-uc.a.run.app', {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',

@@ -48,7 +48,8 @@ export const addLTITool = (tool) => {
             active: tool.active
         }
         const postData = JSON.stringify(post_data);
-        return fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/registerTool', {
+        //return fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/registerTool', {
+        return fetch('https://registertool-ulta7xj7hq-uc.a.run.app', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -83,7 +84,8 @@ export const addLTITool = (tool) => {
 export const removeLTITool = (tool) => {
     return (dispatch, getState, {getFirebase}) => {
         const postData =  JSON.stringify({id: tool.id});
-        return fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/deleteTool', {
+        //return fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/deleteTool', {
+        return fetch('https://deletetool-ulta7xj7hq-uc.a.run.app', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -118,7 +120,8 @@ export const removeLTITool = (tool) => {
 }
 
 export const doDynamicRegistration = (url, setErrorMessage) => {
-    return fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/doDynamicRegistration', {
+    //return fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/doDynamicRegistration', {
+    return fetch('https://dodynamicregistration-ulta7xj7hq-uc.a.run.app', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',

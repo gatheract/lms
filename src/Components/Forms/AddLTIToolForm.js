@@ -36,7 +36,8 @@ const AddLTIToolForm = ({course, addTool, tools, userId}) => {
             //customParameters` - Optional
         }
         const postData = JSON.stringify(post_data);
-        fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/LTIDeepLinkingLaunch', {
+        //fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/LTIDeepLinkingLaunch', {
+        fetch('https://ltideeplinkinglaunch-ulta7xj7hq-uc.a.run.app', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',

@@ -4,7 +4,8 @@ import useForm from '../../Hooks/useForm'
 
 const AddAdminForm = () => {
     const handleAdminAdd = () => {
-        fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/addAdmin', {
+        //fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/addAdmin', {
+        fetch('https://addadmin-ulta7xj7hq-uc.a.run.app', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',

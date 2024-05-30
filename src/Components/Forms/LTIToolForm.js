@@ -52,7 +52,8 @@ const LTIToolForm = ({ toolId, addLTITool }) => {
       }
       const postData = JSON.stringify(data);
       if(toolId !== "new") {
-        const res = await fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/getTool', {
+        //const res = await fetch('https://us-central1-ltiaas-lms.cloudfunctions.net/getTool', {
+        const res = await fetch('https://gettool-ulta7xj7hq-uc.a.run.app', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
