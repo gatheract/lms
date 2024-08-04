@@ -3,6 +3,8 @@ const {onRequest, onCall, HttpsError} = require("firebase-functions/v2/https");
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const cors = require('cors')({origin: true})
 const https = require('https');
+const { get_memberships } = require("./ltiaas_memberships");
+const { lineitem_get, lineitem_delete, lineitem_put, lineitems_get, lineitems_post, score_get, score_post } = require("./ltiaas_grades");
 var jwt = require('jsonwebtoken');
 const ltiaasApiKey = defineSecret('LTIAAS_API_KEY');
 
@@ -397,35 +399,30 @@ exports.LTIServices = onRequest(async (req, res) => {
       // Verify the JWT with the public Key given by LTIAAS
       decoded = jwt.verify(payload, LTIAAS_PUBLIC_KEY);
       if(decoded.type === "MEMBERSHIPS_GET") {
-        // normally we would check `decoded.parameters.context`
-        // before we select which users to send back
-        const users = [];
-        const docs = await getFirestore().collection('users').get();
-        docs.forEach((doc) => {
-          users.push({
-            id: doc.id,
-            givenName: doc.data().name.split(" ")[0],
-            familyName: doc.data().name.split(" ")[1],
-            middleName: "",
-            email: doc.data().email,
-            roles: [doc.data().userType === "Admin" || doc.data().userType === "Teacher" ? "CONTEXT_INSTRUCTOR" : "CONTEXT_LEARNER"]
-          });
-        });
-        const courseDocs = await getFirestore().collection('courses').where('courseId', '==', decoded.parameters.context).get();
-        let course = {};
-        courseDocs.forEach((doc) => {
-          //TODO: check that we only got one doc
-          course = doc.data();
-        });
-        const message = {
-          context: {
-            id: decoded.parameters.context,
-            label: course.branch,
-            title: course.title
-          },
-          members: users
-        }
+        const message = await get_memberships(decoded);
         res.send(message).status(200);
+      } else if(decoded.type === "LINEITEMS_GET") {
+        const {message, status} = await lineitems_get(decoded);
+        res.send(message).status(status);
+      } else if(decoded.type === "LINEITEM_GET") {
+        const {message, status} = await lineitem_get(decoded);
+        console.log(status);
+        res.status(status).send(message);
+      } else if(decoded.type === "LINEITEMS_POST") {
+        const {message, status} = await lineitems_post(decoded);
+        res.send(message).status(status);
+      } else if(decoded.type === "LINEITEM_PUT") {
+        const {message, status} = await lineitem_put(decoded);
+        res.send(message).status(status);
+      } else if(decoded.type === "LINEITEM_DELETE") {
+        const {message, status} = await lineitem_delete(decoded);
+        res.send(message).status(status);
+      } else if(decoded.type === "RESULTS_GET") {
+        const {message, status} = await score_get(decoded);
+        res.send(message).status(status);
+      } else if(decoded.type === "SCORE_POST") {
+        const {message, status} = await score_post(decoded);
+        res.send(message).status(status);
       } else if(decoded.type === "DEEP_LINKING_RESPONSE") {
 
         // get the tool from the DB
@@ -467,6 +464,7 @@ exports.LTIServices = onRequest(async (req, res) => {
         //res.content_type = 'text/html';
         res.send(html).status(200);
       } else {
+        console.log(decoded)
         res.send({ error: "An error occurred"}).status(500);
       }
 

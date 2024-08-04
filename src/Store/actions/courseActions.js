@@ -138,7 +138,6 @@ export const addTool = (tool, course)  => {
     return (dispatch, getState, {getFirebase}) => {
         const firebase = getFirebase();
         const firestore = getFirebase().firestore();
-        console.log(tool)
         firestore
             .collection('courses')
             .doc(course[0].id)
