@@ -173,6 +173,7 @@ exports.lineitem_delete = async (decoded) => {
 			userId: 'userID',
             activityProgress: 'activityProgress', // I'll add validation on these
             gradingProgress: 'gradingProgress', // I'll add validation on these
+            comment: 'comment', // Optional
             scoreGiven: 100, // Optional
             scoreMaximum: 100 // Required only if score given is present
 	   }
