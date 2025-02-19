@@ -1,10 +1,14 @@
 const functions = require("firebase-functions");
+const {onRequest} = require("firebase-functions/v2/https");
 const admin =  require('firebase-admin');
+const { initializeApp } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+const { doDynamicRegistration, getTool, deleteTool, registerTool, LTILaunch, LTIValidate, LTIServices, LTIDeepLinkingLaunch, LTIDeepLinkingValidate } = require("./ltiaas_apis");
 const cors = require('cors')({origin: true})
-admin.initializeApp(functions.config().firebase)
+initializeApp();
 
 const createNotification = ((notification) => {
-    return admin.firestore().collection('notifications')
+    return getFirestore().collection('notifications')
       .add(notification)
       .then(doc => console.log('notification added', doc));
   });
@@ -20,8 +24,17 @@ exports.newNotificationAdded = functions
     }
 )
 
+exports.doDynamicRegistration = doDynamicRegistration;
+exports.getTool = getTool;
+exports.deleteTool = deleteTool;
+exports.registerTool = registerTool;
+exports.LTILaunch = LTILaunch;
+exports.LTIDeepLinkingLaunch = LTIDeepLinkingLaunch;
+exports.LTIValidate = LTIValidate;
+exports.LTIDeepLinkingValidate = LTIDeepLinkingValidate;
+exports.LTIServices = LTIServices;
 
-exports.addAdmin = functions.https.onRequest(async (req, res) => {
+exports.addAdmin = onRequest(async (req, res) => {
   cors(req, res, async() => {
       try {
         const newAdmin = {
@@ -35,7 +48,7 @@ exports.addAdmin = functions.https.onRequest(async (req, res) => {
 
         const userId = adminRecord.uid;
 
-        await admin.firestore().collection("users").doc(userId).set({
+        await getFirestore().collection("users").doc(userId).set({
           email: req.body.email,
           name: req.body.name,
           userType: 'Admin',

@@ -2,7 +2,7 @@ import React from 'react'
 import {Row, Col, Container, Form, FormGroup, Label, Input, Button} from 'reactstrap'
 import '../App.css'
 import {Redirect} from 'react-router-dom'
-import {ReactComponent as Logo} from '../Assets/Logo.svg'
+import Logo from '../Assets/logo.png'
 import { Link } from 'react-router-dom'
 import {connect} from 'react-redux';
 import {signIn} from '../Store/actions/authActions';
@@ -73,7 +73,7 @@ class Login extends React.Component{
             <Col md="4">
                 <div className="signup-box">
                        <div className="logo-container">
-                           <Logo className="logo"></Logo>
+                           <img src={Logo} className="logo"></img>
                        </div>
                 </div>
             </Col>

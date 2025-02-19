@@ -22,6 +22,10 @@ export const ADMIN_ROUTES = [
     {
         'route': 'Admins',
         'url': '/admins'
+    },
+    {
+        'route': 'LTI Tools',
+        'url': '/tools'
     }
 ]
 

@@ -22,7 +22,7 @@ const ResourceCard = ({resources, course, profile, removeResource}) => {
                         <Card className="video-card mb-3">
                             <CardTitle className="video-title">{r.name}</CardTitle>
                             <Button className="button w-25 mb-2 view-button">
-                                <a href={r.url} className="link">
+                                <a target="blank" href={r.url} className="link">
                                     View
                                 </a> 
                             </Button>
